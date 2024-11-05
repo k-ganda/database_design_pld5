@@ -1,5 +1,5 @@
 const fs = require('fs');
-const csv = require('csv-parser'); 
+const csv = require('csv-parser'); // Make sure to install this package
 const MongoClient = require('mongodb').MongoClient;
 
 // Function to preprocess data from a CSV file and insert it into MongoDB
@@ -13,16 +13,16 @@ const preprocessData = async (filePath, dbName, collectionName) => {
         .on('end', async () => {
             try {
                 // Insert processed data into MongoDB
-                const client = await MongoClient.connect('mongodb+srv://sbabalola:Samuel2006@cluster0.n5f49.mongodb.net/', { useNewUrlParser: true, useUnifiedTopology: true });
-                const db = client.db(User_Behaviour);
-                const collection = db.collection(User);
+                const client = await MongoClient.connect('mongodb+srv://sbabalola:Samuel2006@cluster0.n5f49.mongodb.net/');
+                const db = client.db(dbName); // Use the variable dbName
+                const collection = db.collection(collectionName); // Use the variable collectionName
 
                 for (const row of results) {
                     const userDocument = {
                         _id: row['User ID'],
                         age: row['Age'],
                         gender: row['Gender'],
-                        device: {
+                        device_info: {
                             device_model: row['Device Model'],
                             operating_system: row['Operating System']
                         },
@@ -31,9 +31,9 @@ const preprocessData = async (filePath, dbName, collectionName) => {
                             screen_on_time: row['Screen On Time (hours/day)'],
                             battery_drain: row['Battery Drain (mAh/day)'],
                             apps_installed: row['Number of Apps Installed'],
-                            data_usage: row['Data Usage (MB/day)'],
-                            behavior_class: row['User Behavior Class']
-                        }
+                            data_usage: row['Data Usage (MB/day)']
+                        },
+                        behavior_class: row['User Behavior Class'] 
                     };
 
                     await collection.insertOne(userDocument);
@@ -48,5 +48,5 @@ const preprocessData = async (filePath, dbName, collectionName) => {
 };
 
 // Call the function with your specific file path and database/collection names
-const filePath = 'C:\Users\USER\Repository Destination\database_design_pld5-1\Mongodb\user_behavior_dataset.csv'; 
-preprocessData(filePath, 'User_Behaviour', 'User');
+const filePath = './user_behavior_dataset.csv';
+preprocessData(filePath, 'User_Behaviour', 'User'); // Pass names as strings
