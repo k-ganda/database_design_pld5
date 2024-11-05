@@ -41,3 +41,17 @@ CREATE TABLE Users (
 -- Insert data into Users table
 INSERT INTO Users (UserID, Age, Gender)
 SELECT DISTINCT UserID, Age, Gender FROM TempData;
+
+-- Creating the Devices table
+CREATE TABLE Devices (
+    DeviceID INT PRIMARY KEY AUTO_INCREMENT,
+    UserID INT,
+    DeviceModel VARCHAR(50) NOT NULL,
+    OperatingSystem VARCHAR(20) NOT NULL,
+    NumberOfAppsInstalled INT NOT NULL,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+);
+
+-- Insert data into Devices table
+INSERT INTO Devices (UserID, DeviceModel, OperatingSystem, NumberOfAppsInstalled)
+SELECT DISTINCT UserID, DeviceModel, OperatingSystem, NumberOfAppsInstalled FROM TempData;
