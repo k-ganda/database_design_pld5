@@ -70,3 +70,15 @@ CREATE TABLE AppUsage (
 -- Insert data into AppUsage table
 INSERT INTO AppUsage (UserID, AppUsageTime, ScreenOnTime, BatteryDrain, DataUsage)
 SELECT DISTINCT UserID, AppUsageTime, ScreenOnTime, BatteryDrain, DataUsage FROM TempData;
+
+-- Create UserBehavior table
+CREATE TABLE UserBehavior (
+    BehaviorID INT PRIMARY KEY AUTO_INCREMENT,
+    UserID INT UNIQUE,
+    UserBehaviorClass INT NOT NULL,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+);
+
+-- Insert data into UserBehavior table
+INSERT INTO UserBehavior (UserID, UserBehaviorClass)
+SELECT DISTINCT UserID, UserBehaviorClass FROM TempData;
