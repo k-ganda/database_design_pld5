@@ -30,3 +30,14 @@ LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
 (UserID, DeviceModel, OperatingSystem, AppUsageTime, ScreenOnTime, BatteryDrain
 , NumberOfAppsInstalled, DataUsage, Age, Gender, UserBehaviorClass);
+
+-- Now creating the users table
+CREATE TABLE Users (
+    UserID INT PRIMARY KEY,
+    Age INT NOT NULL,
+    Gender VARCHAR(10) NOT NULL
+);
+
+-- Insert data into Users table
+INSERT INTO Users (UserID, Age, Gender)
+SELECT DISTINCT UserID, Age, Gender FROM TempData;
