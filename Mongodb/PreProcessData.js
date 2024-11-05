@@ -22,7 +22,7 @@ const preprocessData = async (filePath, dbName, collectionName) => {
                         _id: row['User ID'],
                         age: row['Age'],
                         gender: row['Gender'],
-                        device: {
+                        device_info: {
                             device_model: row['Device Model'],
                             operating_system: row['Operating System']
                         },
@@ -49,4 +49,4 @@ const preprocessData = async (filePath, dbName, collectionName) => {
 
 // Call the function with your specific file path and database/collection names
 const filePath = 'C:\Users\USER\Repository Destination\database_design_pld5-1\Mongodb\user_behavior_dataset.csv'; 
-preprocessData(filePath, 'User_Behaviour', 'User');
+preprocessData(filePath, 'user_data', 'Users');
