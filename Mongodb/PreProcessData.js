@@ -19,21 +19,21 @@ const preprocessData = async (filePath, dbName, collectionName) => {
 
                 for (const row of results) {
                     const userDocument = {
-                        _id: row['User ID'],
-                        age: row['Age'],
-                        gender: row['Gender'],
-                        device_info: {
-                            device_model: row['Device Model'],
-                            operating_system: row['Operating System']
+                        UserID: row['User ID'],
+                        Age: row['Age'],
+                        Gender: row['Gender'],
+                        Device: {
+                            Device_Model: row['Device Model'],
+                            Operating_System: row['Operating System']
                         },
-                        usage_metrics: {
-                            app_usage_time: row['App Usage Time (min/day)'],
-                            screen_on_time: row['Screen On Time (hours/day)'],
-                            battery_drain: row['Battery Drain (mAh/day)'],
-                            apps_installed: row['Number of Apps Installed'],
-                            data_usage: row['Data Usage (MB/day)']
+                        Usage_Metrics: {
+                            App_Usage_Time: row['App Usage Time (min/day)'],
+                            Screen_On_Time: row['Screen On Time (hours/day)'],
+                            Battery_Drain: row['Battery Drain (mAh/day)'],
+                            Apps_Installed: row['Number of Apps Installed'],
+                            Data_Usage: row['Data Usage (MB/day)']
                         },
-                        behavior_class: row['User Behavior Class'] 
+                        User_Behavior_Class: row['User Behavior Class'] 
                     };
 
                     await collection.insertOne(userDocument);
