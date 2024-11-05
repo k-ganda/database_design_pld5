@@ -82,3 +82,6 @@ CREATE TABLE UserBehavior (
 -- Insert data into UserBehavior table
 INSERT INTO UserBehavior (UserID, UserBehaviorClass)
 SELECT DISTINCT UserID, UserBehaviorClass FROM TempData;
+
+-- Dropping Temp Data since we have all we want
+DROP Tempdata;
