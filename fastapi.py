@@ -26,3 +26,16 @@ class Device(BaseModel):
     device_model: str
     operating_system: str
     number_of_apps_installed: int
+
+class AppUsage(BaseModel):
+    app_usage_id: int
+    user_id: int
+    app_usage_time: int
+    screen_on_time: float
+    battery_drain: float
+    data_usage: float
+
+class UserBehavior(BaseModel):
+    behavior_id: int
+    user_id: int
+    user_behavior_class: int
