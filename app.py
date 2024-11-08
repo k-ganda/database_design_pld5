@@ -27,6 +27,7 @@ db = mysql.connector.connect(
 )
 cursor = db.cursor()
 app = FastAPI()
+
 class User(BaseModel):
     user_id: int
     age: int
