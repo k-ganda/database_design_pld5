@@ -118,23 +118,29 @@ def create_app_usage(app_usage: AppUsage):
 # Endpoint: Create User Behavior (POST)
 @app.post("/user-behavior/", response_model=UserBehavior)
 def create_user_behavior(user_behavior: UserBehavior):
-    db = get_db_connection()
-    cursor = db.cursor()
-    try:
-        cursor.execute("INSERT INTO userbehavior (UserID, UserBehaviorClass) VALUES (%s, %s)", 
-                       (user_behavior.user_id, user_behavior.user_behavior_class))
-        db.commit()
-        user_behavior.behavior_id = cursor.lastrowid
-        return user_behavior
-    except errors.IntegrityError as e:
-        db.rollback()
-        if "foreign key constraint fails" in str(e):
-            raise HTTPException(status_code=400, detail="UserID does not exist in the users table.")
-        else:
-            raise HTTPException(status_code=500, detail="Database error occurred.")
-    finally:
-        cursor.close()
-        db.close()
+    with get_db_connection() as db:
+        with db.cursor() as cursor:
+            try:
+                cursor.execute(
+                    """INSERT INTO userbehavior 
+                       (UserID, UserBehaviorClass) 
+                       VALUES (%s, %s)""",
+                    (user_behavior.user_id, user_behavior.user_behavior_class)
+                )
+                db.commit()
+                user_behavior.behavior_id = cursor.lastrowid
+                return user_behavior
+            except MySQLError as e:
+                db.rollback()
+                if "foreign key constraint fails" in str(e):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="UserID does not exist in the users table."
+                    )
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Database error occurred: {str(e)}"
+                )
 
 # Endpoint: Get All Users (GET)
 @app.get("/users/", response_model=List[User])
