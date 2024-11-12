@@ -138,33 +138,32 @@ def update_user(user_id: int, user: UserCreate):
     # Update User data
     cursor.execute(
         "UPDATE users SET Age = %s, Gender = %s WHERE UserID = %s",
-        (user.age, user.gender, user.user_id)
+        (user.age, user.gender, user_id)
     )
 
     # Update Devices data
     for device in user.devices:
         cursor.execute(
             "UPDATE devices SET DeviceModel = %s, OperatingSystem = %s, NumberOfAppsInstalled = %s WHERE UserID = %s",
-            (device.device_model, device.operating_system, device.number_of_apps_installed, user.user_id)
+            (device.device_model, device.operating_system, device.number_of_apps_installed, user_id)
         )
 
     # Update App Usage data
     for usage in user.app_usage:
         cursor.execute(
             "UPDATE appusage SET AppUsageTime = %s, ScreenOnTime = %s, BatteryDrain = %s, DataUsage = %s WHERE UserID = %s",
-            (usage.app_usage_time, usage.screen_on_time, usage.battery_drain, usage.data_usage, user.user_id)
+            (usage.app_usage_time, usage.screen_on_time, usage.battery_drain, usage.data_usage, user_id)
         )
 
     # Update User Behavior data
     cursor.execute(
         "UPDATE userbehavior SET UserBehaviorClass = %s WHERE UserID = %s",
-        (user.user_behavior.user_behavior_class, user.user_id)
+        (user.user_behavior.user_behavior_class, user_id)
     )
     
     db.commit()
 
     return user
-
 
 
 @app.delete("/users/{user_id}", response_model=dict)
