@@ -1,22 +1,21 @@
 from typing import List
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import mysql.connector
-import uvicorn
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
-# Get the database connection details from environment variables
+# Database connection setup
 DB_HOST = os.getenv("DB_HOST")
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_PORT = int(os.getenv("DB_PORT"))
 
-# Database connection
 db = mysql.connector.connect(
     host=DB_HOST,
     user=DB_USER,
@@ -27,103 +26,165 @@ db = mysql.connector.connect(
 )
 cursor = db.cursor()
 app = FastAPI()
-class User(BaseModel):
-    user_id: int
-    age: int
-    gender: str
 
+# Database schemas
 class Device(BaseModel):
-    device_id: int
-    user_id: int
     device_model: str
     operating_system: str
     number_of_apps_installed: int
 
 class AppUsage(BaseModel):
-    app_usage_id: int
-    user_id: int
     app_usage_time: int
     screen_on_time: float
     battery_drain: float
     data_usage: float
 
 class UserBehavior(BaseModel):
-    behavior_id: int
-    user_id: int
     user_behavior_class: int
 
-# Create (POST)
-@app.post("/users/", response_model=User)
-def create_user(user: User):
+class UserCreate(BaseModel):
+    user_id: int
+    age: int
+    gender: str
+    devices: List[Device]
+    app_usage: List[AppUsage]
+    user_behavior: UserBehavior
+
+class UserResponse(UserCreate):
+    pass
+
+@app.post("/users/", response_model=UserResponse)
+def create_user(user: UserCreate):
+    # Insert User data
     cursor.execute("INSERT INTO users (UserID, Age, Gender) VALUES (%s, %s, %s)", (user.user_id, user.age, user.gender))
     db.commit()
+
+    # Insert Devices data
+    for device in user.devices:
+        cursor.execute(
+            "INSERT INTO devices (UserID, DeviceModel, OperatingSystem, NumberOfAppsInstalled) VALUES (%s, %s, %s, %s)",
+            (user.user_id, device.device_model, device.operating_system, device.number_of_apps_installed)
+        )
+    db.commit()
+
+    # Insert App Usage data
+    for usage in user.app_usage:
+        cursor.execute(
+            "INSERT INTO appusage (UserID, AppUsageTime, ScreenOnTime, BatteryDrain, DataUsage) VALUES (%s, %s, %s, %s, %s)",
+            (user.user_id, usage.app_usage_time, usage.screen_on_time, usage.battery_drain, usage.data_usage)
+        )
+    db.commit()
+
+    # Insert User Behavior data
+    cursor.execute(
+        "INSERT INTO userbehavior (UserID, UserBehaviorClass) VALUES (%s, %s)",
+        (user.user_id, user.user_behavior.user_behavior_class)
+    )
+    db.commit()
+
     return user
 
-@app.post("/devices/", response_model=Device)
-def create_device(device: Device):
-    cursor.execute("INSERT INTO devices (UserID, DeviceModel, OperatingSystem, NumberOfAppsInstalled) VALUES (%s, %s, %s, %s)", (device.user_id, device.device_model, device.operating_system, device.number_of_apps_installed))
-    db.commit()
-    device.device_id = cursor.lastrowid
-    return device
-
-@app.post("/app-usage/", response_model=AppUsage)
-def create_app_usage(app_usage: AppUsage):
-    cursor.execute("INSERT INTO appusage (UserID, AppUsageTime, ScreenOnTime, BatteryDrain, DataUsage) VALUES (%s, %s, %s, %s, %s)", (app_usage.user_id, app_usage.app_usage_time, app_usage.screen_on_time, app_usage.battery_drain, app_usage.data_usage))
-    db.commit()
-    app_usage.app_usage_id = cursor.lastrowid
-    return app_usage
-
-@app.post("/user-behavior/", response_model=UserBehavior)
-def create_user_behavior(user_behavior: UserBehavior):
-    cursor.execute("INSERT INTO userbehavior (UserID, UserBehaviorClass) VALUES (%s, %s)", (user_behavior.user_id, user_behavior.user_behavior_class))
-    db.commit()
-    user_behavior.behavior_id = cursor.lastrowid
-    return user_behavior
-
-# Read (GET)
-@app.get("/users/", response_model=List[User])
-def get_all_users():
-    cursor.execute("SELECT * FROM users")
-    rows = cursor.fetchall()
-    return [User(user_id=row[0], age=row[1], gender=row[2]) for row in rows]
-
-@app.get("/devices/", response_model=List[Device])
-def get_all_devices():
-    cursor.execute("SELECT * FROM devices")
-    rows = cursor.fetchall()
-    return [Device(device_id=row[0], user_id=row[1], device_model=row[2], operating_system=row[3], number_of_apps_installed=row[4]) for row in rows]
-
-@app.get("/app-usage/", response_model=List[AppUsage])
-def get_all_app_usage():
-    cursor.execute("SELECT * FROM appusage")
-    rows = cursor.fetchall()
-    return [AppUsage(app_usage_id=row[0], user_id=row[1], app_usage_time=row[2], screen_on_time=row[3], battery_drain=row[4], data_usage=row[5]) for row in rows]
-
-@app.get("/user-behavior/", response_model=List[UserBehavior])
-def get_all_user_behavior():
-    cursor.execute("SELECT * FROM userbehavior")
-    rows = cursor.fetchall()
-    return [UserBehavior(behavior_id=row[0], user_id=row[1], user_behavior_class=row[2]) for row in rows]
-
-# Update (PUT)
-@app.put("/users/{user_id}", response_model=User)
-def update_user(user_id: int, user: User):
-    cursor.execute("UPDATE users SET Age = %s, Gender = %s WHERE UserID = %s", (user.age, user.gender, user_id))
-    db.commit()
-    if cursor.rowcount > 0:
-        return User(user_id=user_id, age=user.age, gender=user.gender)
-    else:
-        raise HTTPException(status_code=404, detail="User not found")
-
-# Delete (DELETE)
-@app.delete("/users/{user_id}", response_model=dict)
-def delete_user(user_id: int):
-    cursor.execute("DELETE FROM users WHERE UserID = %s", (user_id,))
-    db.commit()
-    if cursor.rowcount > 0:
-        return {"message": "User deleted"}
-    else:
+@app.get("/users/{user_id}", response_model=UserResponse)
+def get_user(user_id: int):
+    # Retrieve User data
+    cursor.execute("SELECT UserID, Age, Gender FROM users WHERE UserID = %s", (user_id,))
+    user_data = cursor.fetchone()
+    if not user_data:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # Initialize UserResponse with default values
+    user_response = UserResponse(
+        user_id=user_data[0],
+        age=user_data[1],
+        gender=user_data[2],
+        devices=[],  # Empty list for devices
+        app_usage=[],  # Empty list for app_usage
+        user_behavior=UserBehavior(user_behavior_class=0)  # Default valid instance of UserBehavior
+    )
+
+    # Retrieve Device data
+    cursor.execute("SELECT DeviceModel, OperatingSystem, NumberOfAppsInstalled FROM devices WHERE UserID = %s", (user_id,))
+    device_data = cursor.fetchall()
+    user_response.devices = [
+        Device(device_model=row[0], operating_system=row[1], number_of_apps_installed=row[2])
+        for row in device_data
+    ]
+
+    # Retrieve App Usage data
+    cursor.execute("SELECT AppUsageTime, ScreenOnTime, BatteryDrain, DataUsage FROM appusage WHERE UserID = %s", (user_id,))
+    app_usage_data = cursor.fetchall()
+    user_response.app_usage = [
+        AppUsage(app_usage_time=row[0], screen_on_time=row[1], battery_drain=row[2], data_usage=row[3])
+        for row in app_usage_data
+    ]
+
+    # Retrieve User Behavior data
+    cursor.execute("SELECT UserBehaviorClass FROM userbehavior WHERE UserID = %s", (user_id,))
+    user_behavior_data = cursor.fetchone()
+    if user_behavior_data:
+        user_response.user_behavior = UserBehavior(user_behavior_class=user_behavior_data[0])
+    
+
+    return user_response
+
+@app.put("/users/{user_id}", response_model=UserResponse)
+def update_user(user_id: int, user: UserCreate):
+    # Check if the user exists
+    cursor.execute("SELECT UserID FROM users WHERE UserID = %s", (user_id,))
+    existing_user = cursor.fetchone()
+    if not existing_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Update User data
+    cursor.execute(
+        "UPDATE users SET Age = %s, Gender = %s WHERE UserID = %s",
+        (user.age, user.gender, user.user_id)
+    )
+
+    # Update Devices data
+    for device in user.devices:
+        cursor.execute(
+            "UPDATE devices SET DeviceModel = %s, OperatingSystem = %s, NumberOfAppsInstalled = %s WHERE UserID = %s",
+            (device.device_model, device.operating_system, device.number_of_apps_installed, user.user_id)
+        )
+
+    # Update App Usage data
+    for usage in user.app_usage:
+        cursor.execute(
+            "UPDATE appusage SET AppUsageTime = %s, ScreenOnTime = %s, BatteryDrain = %s, DataUsage = %s WHERE UserID = %s",
+            (usage.app_usage_time, usage.screen_on_time, usage.battery_drain, usage.data_usage, user.user_id)
+        )
+
+    # Update User Behavior data
+    cursor.execute(
+        "UPDATE userbehavior SET UserBehaviorClass = %s WHERE UserID = %s",
+        (user.user_behavior.user_behavior_class, user.user_id)
+    )
+    
+    db.commit()
+
+    return user
+
+
+
+@app.delete("/users/{user_id}", response_model=dict)
+def delete_user(user_id: int):
+    # Check if the user exists
+    cursor.execute("SELECT UserID FROM users WHERE UserID = %s", (user_id,))
+    user = cursor.fetchone()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    
+    cursor.execute("DELETE FROM devices WHERE UserID = %s", (user_id,))
+    cursor.execute("DELETE FROM appusage WHERE UserID = %s", (user_id,))
+    cursor.execute("DELETE FROM userbehavior WHERE UserID = %s", (user_id,))
+
+    # Delete from the Users table
+    cursor.execute("DELETE FROM users WHERE UserID = %s", (user_id,))
+    db.commit()
+
+    return {"message": f"User with ID {user_id} and all related data have been deleted"}
+
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
