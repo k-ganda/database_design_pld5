@@ -49,4 +49,3 @@ const preprocessData = async (filePath, dbName, collectionName) => {
 
 // Call the function with your specific file path and database/collection names
 const filePath = './user_behavior_dataset.csv';
-preprocessData(filePath, 'User_Behaviour', 'User'); // Pass names as strings
