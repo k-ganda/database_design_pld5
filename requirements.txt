@@ -3,4 +3,3 @@ fastapi
 pydantic
 mysql.connector
 uvicorn
-dotenv
