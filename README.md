@@ -45,3 +45,5 @@ python3 -m venv venv
 source venv/Scripts/activate
 pip install -r requirements.txt
 python app.py
+
+Deployed CRUD API Endpoints: https://database-design-pld5.onrender.com/docs#/

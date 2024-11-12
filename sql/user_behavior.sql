@@ -32,56 +32,53 @@ IGNORE 1 ROWS
 , NumberOfAppsInstalled, DataUsage, Age, Gender, UserBehaviorClass);
 
 -- Now creating the users table
-CREATE TABLE Users (
+CREATE TABLE users (
     UserID INT PRIMARY KEY,
     Age INT NOT NULL,
     Gender VARCHAR(10) NOT NULL
 );
 
 -- Insert data into Users table
-INSERT INTO Users (UserID, Age, Gender)
-SELECT DISTINCT UserID, Age, Gender FROM TempData;
+INSERT INTO users (UserID, Age, Gender)
+SELECT DISTINCT UserID, Age, Gender FROM Tempdata;
 
 -- Creating the Devices table
-CREATE TABLE Devices (
+CREATE TABLE devices (
     DeviceID INT PRIMARY KEY AUTO_INCREMENT,
     UserID INT,
     DeviceModel VARCHAR(50) NOT NULL,
     OperatingSystem VARCHAR(20) NOT NULL,
     NumberOfAppsInstalled INT NOT NULL,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+    FOREIGN KEY (UserID) REFERENCES users(UserID)
 );
 
 -- Insert data into Devices table
-INSERT INTO Devices (UserID, DeviceModel, OperatingSystem, NumberOfAppsInstalled)
-SELECT DISTINCT UserID, DeviceModel, OperatingSystem, NumberOfAppsInstalled FROM TempData;
+INSERT INTO devices (UserID, DeviceModel, OperatingSystem, NumberOfAppsInstalled)
+SELECT DISTINCT UserID, DeviceModel, OperatingSystem, NumberOfAppsInstalled FROM Tempdata;
 
 -- Create AppUsage table
-CREATE TABLE AppUsage (
+CREATE TABLE appusage (
     AppUsageID INT PRIMARY KEY AUTO_INCREMENT,
     UserID INT,
     AppUsageTime INT NOT NULL,
     ScreenOnTime DECIMAL(4,2) NOT NULL,
     BatteryDrain DECIMAL(7,3) NOT NULL,
     DataUsage DECIMAL(6,2) NOT NULL,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+    FOREIGN KEY (UserID) REFERENCES users(UserID)
 );
 
 -- Insert data into AppUsage table
-INSERT INTO AppUsage (UserID, AppUsageTime, ScreenOnTime, BatteryDrain, DataUsage)
-SELECT DISTINCT UserID, AppUsageTime, ScreenOnTime, BatteryDrain, DataUsage FROM TempData;
+INSERT INTO appusage (UserID, AppUsageTime, ScreenOnTime, BatteryDrain, DataUsage)
+SELECT DISTINCT UserID, AppUsageTime, ScreenOnTime, BatteryDrain, DataUsage FROM tempdata;
 
 -- Create UserBehavior table
-CREATE TABLE UserBehavior (
+CREATE TABLE userbehavior (
     BehaviorID INT PRIMARY KEY AUTO_INCREMENT,
     UserID INT UNIQUE,
     UserBehaviorClass INT NOT NULL,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+    FOREIGN KEY (UserID) REFERENCES users(UserID)
 );
 
 -- Insert data into UserBehavior table
-INSERT INTO UserBehavior (UserID, UserBehaviorClass)
-SELECT DISTINCT UserID, UserBehaviorClass FROM TempData;
-
--- Dropping Temp Data since we have all we want
-DROP Tempdata;
+INSERT INTO userbehavior (UserID, UserBehaviorClass)
+SELECT DISTINCT UserID, UserBehaviorClass FROM Tempdata;
