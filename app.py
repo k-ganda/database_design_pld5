@@ -53,6 +53,21 @@ class UserCreate(BaseModel):
 class UserResponse(UserCreate):
     pass
 
+@app.get("/userbehaviors", response_model=List[UserBehavior])
+def get_all_user_behaviors():
+    # Fetch all user behavior data
+    cursor.execute("SELECT UserID, UserBehaviorClass FROM userbehavior")
+    behavior_data = cursor.fetchall()
+    
+    # Transform the fetched data into a list of UserBehavior models
+    user_behaviors = [
+        UserBehavior(user_behavior_class=row[1])
+        for row in behavior_data
+    ]
+    
+    return user_behaviors
+
+
 @app.post("/users/", response_model=UserResponse)
 def create_user(user: UserCreate):
     # Insert User data
@@ -186,4 +201,4 @@ def delete_user(user_id: int):
     return {"message": f"User with ID {user_id} and all related data have been deleted"}
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", host="localhost", port=8000, reload=True)
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
