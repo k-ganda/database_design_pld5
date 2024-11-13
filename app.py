@@ -53,21 +53,6 @@ class UserCreate(BaseModel):
 class UserResponse(UserCreate):
     pass
 
-@app.get("/userbehaviors", response_model=List[UserBehavior])
-def get_all_user_behaviors():
-    # Fetch all user behavior data
-    cursor.execute("SELECT UserID, UserBehaviorClass FROM userbehavior")
-    behavior_data = cursor.fetchall()
-    
-    # Transform the fetched data into a list of UserBehavior models
-    user_behaviors = [
-        UserBehavior(user_behavior_class=row[1])
-        for row in behavior_data
-    ]
-    
-    return user_behaviors
-
-
 @app.post("/users/", response_model=UserResponse)
 def create_user(user: UserCreate):
     # Insert User data
@@ -98,6 +83,55 @@ def create_user(user: UserCreate):
     db.commit()
 
     return user
+
+@app.get("/users/latest", response_model=UserResponse)
+def get_latest_user():
+    try:
+        # Query to fetch the most recent user by user_id (assuming user_id is auto-incrementing)
+        cursor.execute("SELECT UserID, Age, Gender FROM users ORDER BY UserID DESC LIMIT 1")
+        user_data = cursor.fetchone()
+        
+        if not user_data:
+            raise HTTPException(status_code=404, detail="No users found")
+        
+        # Initialize UserResponse with the basic user data
+        user_response = UserResponse(
+            user_id=user_data[0],
+            age=user_data[1],
+            gender=user_data[2],
+            devices=[],  # Empty list for devices, will fetch data next
+            app_usage=[],  # Empty list for app usage
+            user_behavior=UserBehavior(user_behavior_class=0)  # Default valid instance
+        )
+
+        # Fetch the related devices data
+        cursor.execute("SELECT DeviceModel, OperatingSystem, NumberOfAppsInstalled FROM devices WHERE UserID = %s", (user_data[0],))
+        device_data = cursor.fetchall()
+        user_response.devices = [
+            Device(device_model=row[0], operating_system=row[1], number_of_apps_installed=row[2])
+            for row in device_data
+        ]
+        
+        # Fetch the related app usage data
+        cursor.execute("SELECT AppUsageTime, ScreenOnTime, BatteryDrain, DataUsage FROM appusage WHERE UserID = %s", (user_data[0],))
+        app_usage_data = cursor.fetchall()
+        user_response.app_usage = [
+            AppUsage(app_usage_time=row[0], screen_on_time=row[1], battery_drain=row[2], data_usage=row[3])
+            for row in app_usage_data
+        ]
+        
+        # Fetch the related user behavior data
+        cursor.execute("SELECT UserBehaviorClass FROM userbehavior WHERE UserID = %s", (user_data[0],))
+        user_behavior_data = cursor.fetchone()
+        if user_behavior_data:
+            user_response.user_behavior = UserBehavior(user_behavior_class=user_behavior_data[0])
+
+        return user_response
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving the latest user: {str(e)}")
+
+
 
 @app.get("/users/{user_id}", response_model=UserResponse)
 def get_user(user_id: int):
